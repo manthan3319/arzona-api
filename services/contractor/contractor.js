@@ -34,7 +34,7 @@ const addContractor = async (req, mainUserId, createdBy) => {
   let walletaddress = req.body.walletaddress;
 
   let UserAdd = await dbService.createOneRecord("contractorModel", req.body);
-
+  console.log("UserAdd",UserAdd);
   if (UserAdd) {
     return {
       messages: "user login sucessfuly"
@@ -56,8 +56,7 @@ const rewardadd = async (req, mainUserId, createdBy) => {
   };
 
   const walletaddressRefaralGetData = await dbService.findAllRecords("contractorModel", where);
-
-
+  console.log("walletaddressRefaralGetData", walletaddressRefaralGetData);
 
   const rewardPercentages = [
     40, 20, 10, 5, 2.5, 1.25, 1.25, 1.25, 1.25, 1.25,
@@ -67,6 +66,7 @@ const rewardadd = async (req, mainUserId, createdBy) => {
 
   let currentWalletAddress = walletaddress;
   let baseAmount = Amount * 20 / 100;
+  let messages = [];
 
   for (let level = 0; level < rewardPercentages.length; level++) {
     let referralAddress = null;
@@ -79,7 +79,7 @@ const rewardadd = async (req, mainUserId, createdBy) => {
     }
 
     if (!referralAddress) {
-      console.log(`No referral address found for level ${level + 1}`);
+      messages.push(`No referral address found for level ${level + 1}, skipping this level`);
       break;
     }
 
@@ -95,19 +95,24 @@ const rewardadd = async (req, mainUserId, createdBy) => {
     console.log(`Level ${level + 1} Reward Data`, rewardData);
 
     // Save the reward data to the database
-    const data =  await dbService.createOneRecord("rewardaddModel", rewardData);
-    currentWalletAddress = referralAddress;
+    const data = await dbService.createOneRecord("rewardaddModel", rewardData);
+    console.log("data", data);
 
-    if(data){
-      return{
-        messages:"deposite add sucessfuly and Ramount add"
-      }
-    }else{
-      messages:"deposite not add"
+    if (data) {
+      messages.push(`Level ${level + 1}: Deposit and Ramount added successfully`);
+    } else {
+      messages.push(`Level ${level + 1}: Deposit not added`);
     }
-    
+
+    currentWalletAddress = referralAddress;
   }
+
+  return {
+    messages: messages.join('\n')
+  };
 };
+
+
 
 
 
